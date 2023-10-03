@@ -1,11 +1,14 @@
 package com.behaviour.service.impl;
 
+import com.behaviour.dto.OrderCountDto;
+import com.behaviour.dto.PriorityBasedDto;
 import com.behaviour.model.Issues;
 import com.behaviour.repository.IssuesRepository;
 import com.behaviour.service.IssuesService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,7 +23,7 @@ public class IssuesServiceImpl implements IssuesService {
     }
 
     @Override
-    public List<Issues> getAllIssues() {
+    public List<OrderCountDto> getAllIssuesWithOrderCount() {
         log.info("Calling Issues server");
         List<Issues> allIssues = issuesRepository.findAll();
         log.info("Manipulating data based on Order Count and ASCII");
@@ -33,18 +36,28 @@ public class IssuesServiceImpl implements IssuesService {
             }
         });
 
+        List<OrderCountDto> orderCountDtos = new ArrayList<>();
+
+        for (Issues issue : allIssues) {
+            OrderCountDto orderCountDto = new OrderCountDto();
+            orderCountDto.setName(issue.getName());
+            orderCountDto.setDescription(issue.getDescription());
+            orderCountDto.setOrderCount(issue.getOrderCount());
+            orderCountDtos.add(orderCountDto);
+        }
+
         log.info("Returning issues from issue server");
-        return allIssues;
+        return orderCountDtos;
     }
 
 
     @Override
-    public Issues addIssues(Issues issues){
+    public Issues addIssues(OrderCountDto orderCountDto) {
 
         log.info("Initiating adding of issues");
         Issues addIssues = new Issues();
-        addIssues.setName(issues.getName());
-        addIssues.setDescription(issues.getDescription());
+        addIssues.setName(orderCountDto.getName());
+        addIssues.setDescription(orderCountDto.getDescription());
         addIssues.setOrderCount(0L);
 
         log.info("Added Issues Successfully");
@@ -52,10 +65,22 @@ public class IssuesServiceImpl implements IssuesService {
     }
 
     @Override
-    public Issues findIssueByName(String name){
+    public Issues addPriorityIssues(PriorityBasedDto priorityBasedDto){
+        log.info("Adding issues with priority");
+        Issues addIssues = new Issues();
+        addIssues.setName(priorityBasedDto.getName());
+        addIssues.setDescription(priorityBasedDto.getDescription());
+        addIssues.setPriority(priorityBasedDto.getPriority());
+
+        log.info("Issues with priority added successfully");
+        return issuesRepository.save(addIssues);
+    }
+
+    @Override
+    public Issues findIssueByName(String name) {
         log.info("Finding issues by name");
         Issues foundIssue = issuesRepository.findIssuesByName(name);
-        if(foundIssue != null){
+        if (foundIssue != null) {
             Long updateOrderCount = foundIssue.getOrderCount() + 1;
             foundIssue.setOrderCount(updateOrderCount);
             issuesRepository.save(foundIssue);
@@ -64,4 +89,32 @@ public class IssuesServiceImpl implements IssuesService {
         log.info("Delivered the issues count with increased order count");
         return foundIssue;
     }
+
+    @Override
+    public List<PriorityBasedDto> getAllIssuesWithPriority(){
+        log.info("Getting Issues list based on priority");
+        List<Issues> issues = issuesRepository.findAll();
+
+        issues.sort((issue1, issue2) -> {
+            int priorityComparison = issue1.getPriority().compareTo(issue2.getPriority());
+            if (priorityComparison == 0) {
+                return issue1.getName().compareTo(issue2.getName());
+            } else {
+                return priorityComparison;
+            }
+        });
+
+        List<PriorityBasedDto> priorityBasedDtos = new ArrayList<>();
+        for (Issues issue : issues) {
+            PriorityBasedDto dto = new PriorityBasedDto();
+            dto.setName(issue.getName());
+            dto.setDescription(issue.getDescription());
+            dto.setPriority(issue.getPriority());
+            priorityBasedDtos.add(dto);
+        }
+
+        log.info("Returning issues based on priority");
+        return priorityBasedDtos;
+    }
+
 }

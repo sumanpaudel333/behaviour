@@ -1,6 +1,7 @@
 package com.behaviour.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.io.Serializable;
 @Builder
 @Entity
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Issues implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,4 +25,6 @@ public class Issues implements Serializable {
     private String description;
     @JsonAlias("order_count")
     private Long orderCount;
+    @JsonAlias("priority")
+    private String priority;
 }
